@@ -1,0 +1,41 @@
+body { 
+    background-color: #f8fafc; 
+    overflow-x: hidden; 
+}
+
+/* Spinner Loader Customizado */
+.loader {
+    border: 3px solid #f3f3f3; 
+    border-top: 3px solid #7e22ce;
+    border-radius: 50%; 
+    width: 20px; 
+    height: 20px;
+    animation: spin 1s linear infinite; 
+    display: inline-block; 
+    vertical-align: middle;
+}
+
+@keyframes spin { 
+    0% { transform: rotate(0deg); } 
+    100% { transform: rotate(360deg); } 
+}
+
+/* Ocultar input file nativo para estilar el label */
+input[type="file"] { 
+    display: none; 
+}
+
+/* Lienzos ocultos para renderizado con HTML2Canvas */
+#export-templates { 
+    position: absolute; 
+    left: -9999px; 
+    top: 0; 
+    width: 600px; 
+    background: white; 
+    z-index: -10; 
+}
+
+/* Suavizado en la transición de las pestañas */
+.tab-content { 
+    transition: opacity 0.3s ease-in-out; 
+}

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fintech Manager Pro - Ecosistema Completo</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="loginScreen" class="fixed inset-0 bg-purple-900 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-sm w-full mx-4">
+            <h2 class="text-2xl font-black text-purple-900 mb-2">Fintech Manager <span class="text-purple-500">Pro</span></h2>
+            <p class="text-gray-500 text-sm mb-6 font-bold uppercase tracking-wider">Acceso Restringido</p>
+            
+            <input type="password" id="passInput" placeholder="Contraseña" class="w-full text-center text-2xl font-bold text-gray-800 border-b-2 border-purple-200 outline-none focus:border-purple-600 pb-2 mb-6" onkeypress="if(event.key === 'Enter') verificarAcceso()">
+            
+            <button onclick="verificarAcceso()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-black shadow-lg transform active:scale-95 transition">INGRESAR</button>
+            <p id="loginError" class="text-red-500 text-xs font-bold mt-4 hidden">Contraseña incorrecta. Intente de nuevo.</p>
+        </div>
+    </div>
+
+    <div id="mainApp" class="max-w-6xl mx-auto space-y-6 relative hidden">
+        
+        <div class="bg-gradient-to-r from-purple-900 to-purple-700 p-6 rounded-3xl shadow-xl text-white flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-black italic tracking-wider">Fintech Manager <span class="font-normal text-purple-300">Pro</span></h1>
+                <p class="text-purple-200 text-sm mt-1">Ecosistema Financiero Integrado</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button onclick="exportarAppGlobal()" class="bg-yellow-500 hover:bg-yellow-400 text-purple-900 text-sm px-6 py-3 rounded-xl font-black shadow-lg transition flex items-center transform hover:scale-105">
+                    💾 Guardar App (Exportar Todo)
+                </button>
+                <button onclick="limpiarAppGlobal()" class="bg-red-600 hover:bg-red-500 text-xs px-4 py-3 rounded-xl font-bold shadow transition">
+                    🗑️ Reiniciar App
+                </button>
+            </div>
+        </div>
+
+        <div class="flex space-x-2 bg-gray-200 p-1 rounded-2xl shadow-inner w-full md:w-max mx-auto">
+            <button id="btnTabAbonos" onclick="cambiarPestaña('abonos')" class="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md bg-white text-purple-800">
+                💳 Escáner de Abonos
+            </button>
+            <button id="btnTabPrestamos" onclick="cambiarPestaña('prestamos')" class="flex-1 md:flex-none px-6 py-3 rounded-xl font-bold text-sm transition-all text-gray-500 hover:text-purple-600">
+                💸 Emisor de Préstamos
+            </button>
+        </div>
+
+        <div id="vistaAbonos" class="tab-content space-y-6 block">
+            <div class="flex flex-col sm:flex-row justify-between items-end mb-2 px-2 border-b border-purple-200 pb-2 gap-4">
+                <h2 class="text-xl font-black text-purple-900 uppercase">Gestión de Abonos</h2>
+                <div class="flex gap-2">
+                    <button onclick="descargarPNG('resumen')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-2 rounded-lg font-bold shadow">🖼️ Resumen</button>
+                    <button onclick="descargarPNG('detalle')" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-2 rounded-lg font-bold shadow">📋 Detalle</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-md border-l-4 border-purple-600 space-y-4">
+                        <div>
+                            <label class="block text-purple-600 text-xs font-bold uppercase tracking-wider mb-2">1. Seleccionar Perfil de Cliente:</label>
+                            <select id="selectorPerfil" onchange="cargarPerfilSeleccionado()" class="w-full text-lg font-bold text-gray-800 border-2 border-purple-200 rounded-xl p-2 outline-none focus:border-purple-600 transition bg-purple-50">
+                                </select>
+                        </div>
+                        
+                        <div id="infoPerfilActivo" class="pt-4 border-t border-gray-100 hidden">
+                            <label class="block text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Deuda Inicial Asignada:</label>
+                            <div class="flex items-center justify-between">
+                                <p id="abDeudaVisual" class="text-2xl font-black text-gray-800">S/ 0.00</p>
+                                <button onclick="editarDeudaManual()" class="text-xs text-blue-500 underline">Editar deuda</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-md border border-gray-100 relative">
+                        <div id="bloqueoEscaner" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-3xl">
+                            <p class="text-sm font-bold text-purple-800 bg-purple-100 p-3 rounded-xl border border-purple-300">Selecciona un cliente arriba primero ☝️</p>
+                        </div>
+
+                        <h3 class="font-bold text-purple-800 mb-4">2. Escanear Comprobante</h3>
+                        <label class="block w-full py-6 border-2 border-dashed border-purple-200 rounded-2xl cursor-pointer hover:bg-purple-50 text-center transition">
+                            <span class="text-purple-600 font-bold">Subir Yape</span>
+                            <input id="abImagen" type="file" accept="image/*">
+                        </label>
+                        <div id="abPreview" class="mt-4 text-center hidden">
+                            <img id="abImgTag" class="mx-auto h-20 object-contain rounded-lg shadow-sm border border-gray-200" src="" alt="Vista previa">
+                        </div>
+                        <div id="abEstado" class="mt-4 p-3 rounded-xl text-xs font-bold text-center bg-purple-50 text-purple-700 hidden">
+                            <div class="loader mr-2"></div><span id="abEstadoTxt">Escaneando... (Espera unos segundos)</span>
+                        </div>
+                        <div id="abResultado" class="mt-4 p-4 bg-purple-50 rounded-2xl border border-purple-100 hidden">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p id="abTempMonto" class="text-2xl font-black text-purple-900">S/ 0.00</p>
+                                    <p id="abTempFecha" class="text-xs text-purple-700">00/00/0000</p>
+                                </div>
+                                <button onclick="registrarAbono()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg">AÑADIR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-white p-6 rounded-3xl shadow-md border-b-4 border-blue-500">
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-1">Total Abonado (Cliente Actual)</p>
+                            <p id="abTotalAbonado" class="text-4xl font-black text-blue-600">S/ 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl shadow-md border-b-4 border-green-500 relative">
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-1">Saldo Pendiente (Cliente Actual)</p>
+                            <p id="abSaldoPendiente" class="text-4xl font-black text-green-600">S/ 0.00</p>
+                            <div id="tagPagado" class="hidden absolute top-4 right-4 bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-lg border border-green-300">¡CANCELADO! ✅</div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl shadow-md overflow-hidden border border-gray-100">
+                        <div class="bg-gray-50 p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">Historial del Cliente Activo</h3>
+                        </div>
+                        <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-500 text-xs uppercase"><th class="px-6 py-3 border-b">Fecha</th><th class="px-6 py-3 border-b text-right">Monto</th><th class="px-6 py-3 border-b text-center">X</th></tr>
+                                </thead>
+                                <tbody id="abTabla" class="divide-y divide-gray-100 text-sm">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="vistaPrestamos" class="tab-content space-y-6 hidden">
+            <div class="mb-2 px-2 border-b border-purple-200 pb-2">
+                <h2 class="text-xl font-black text-purple-900 uppercase">Emisión de Préstamos</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-md border border-gray-100">
+                        <h2 class="text-lg font-black text-purple-900 mb-4 uppercase tracking-wider">Nuevo Préstamo</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-500 text-xs font-bold uppercase mb-1">Cliente:</label>
+                                <input type="text" id="prCliente" placeholder="Ej. María López" class="w-full text-lg font-bold text-gray-800 border-b-2 border-purple-200 outline-none focus:border-purple-600 bg-transparent pb-1">
+                            </div>
+                            <div>
+                                <label class="block text-gray-500 text-xs font-bold uppercase mb-1">Saldo Anterior:</label>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-gray-400">S/</span>
+                                    <input type="number" id="prSaldo" value="0" oninput="calcularPrestamo()" class="w-full text-xl font-bold text-gray-700 border-b-2 border-purple-200 outline-none focus:border-purple-600 bg-transparent">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-purple-600 text-xs font-bold uppercase mb-1">Nuevo Monto:</label>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-purple-400">S/</span>
+                                    <input type="number" id="prNuevo" value="0" oninput="calcularPrestamo()" class="w-full text-2xl font-black text-purple-700 border-b-2 border-purple-300 outline-none focus:border-purple-600 bg-transparent">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-orange-500 text-xs font-bold uppercase mb-1">Comisiones:</label>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-orange-400">S/</span>
+                                    <input type="number" id="prComision" value="0" oninput="calcularPrestamo()" class="w-full text-xl font-bold text-orange-600 border-b-2 border-orange-200 outline-none focus:border-orange-500 bg-transparent">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 bg-gray-50 p-4 rounded-2xl border border-gray-200 text-center">
+                            <p class="text-xs text-gray-500 font-bold uppercase mb-1">Total a Pagar (Nueva Deuda)</p>
+                            <p id="prTotalCalc" class="text-3xl font-black text-green-600">S/ 0.00</p>
+                        </div>
+                        <button onclick="guardarPrestamo()" class="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-black shadow-lg transform active:scale-95 transition">EMITIR Y CREAR PERFIL</button>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-white p-6 rounded-3xl shadow-md border-b-4 border-purple-500 flex justify-between items-center">
+                            <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">Capital Prestado</p><p id="prStatCapital" class="text-3xl font-black text-purple-700">S/ 0.00</p></div><div class="bg-purple-100 p-3 rounded-full">💰</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-3xl shadow-md border-b-4 border-orange-500 flex justify-between items-center">
+                            <div><p class="text-gray-400 text-xs font-bold uppercase mb-1">Comisiones (Ganancia)</p><p id="prStatComision" class="text-3xl font-black text-orange-600">S/ 0.00</p></div><div class="bg-orange-100 p-3 rounded-full">📈</div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl shadow-md overflow-hidden border border-gray-100">
+                        <div class="bg-gray-50 p-4 border-b"><h3 class="font-bold text-gray-700">Historial de Préstamos Emitidos</h3></div>
+                        <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-400 text-xs uppercase"><th class="px-6 py-3 border-b">Cliente</th><th class="px-6 py-3 border-b text-right">Desglose</th><th class="px-6 py-3 border-b text-right">Nueva Deuda Total</th><th class="px-6 py-3 border-b text-center">Acciones</th></tr>
+                                </thead>
+                                <tbody id="prTabla" class="divide-y divide-gray-100 text-sm">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-templates">
+        <div id="plt-resumen" class="p-8 bg-white border-4 border-purple-800 rounded-3xl w-full">
+            <h2 class="text-2xl font-black text-purple-900 text-center uppercase tracking-widest mb-6">Estado de Cuenta</h2>
+            <div class="bg-gray-50 p-6 rounded-2xl mb-6"><p class="text-sm text-gray-500 font-bold uppercase">A nombre de:</p><p id="exp-res-nombre" class="text-3xl font-black text-gray-800">--</p></div>
+            <div class="flex justify-between p-4 bg-purple-50 rounded-xl mb-3"><p class="font-bold text-purple-800">Deuda Total Acumulada:</p><p id="exp-res-prestamo" class="text-xl font-black text-purple-900">S/ 0.00</p></div>
+            <div class="flex justify-between p-4 bg-blue-50 rounded-xl mb-3"><p class="font-bold text-blue-800">Total Abonado:</p><p id="exp-res-abonado" class="text-xl font-black text-blue-900">S/ 0.00</p></div>
+            <div class="flex justify-between p-6 bg-green-50 rounded-2xl"><p class="font-bold text-green-800">Saldo Pendiente Actual:</p><p id="exp-res-saldo" class="text-3xl font-black text-green-600">S/ 0.00</p></div>
+            <p id="exp-res-fecha" class="text-center text-gray-400 text-xs mt-6">Generado: --</p>
+        </div>
+        <div id="plt-detalle" class="p-8 bg-white border-4 border-purple-800 rounded-3xl w-full mt-10">
+            <h2 class="text-2xl font-black text-purple-900 text-center uppercase mb-6">Detalle de Abonos</h2>
+            <div class="bg-gray-50 p-4 rounded-xl mb-4 flex justify-between"><div><p class="text-xs text-gray-500 font-bold">CLIENTE:</p><p id="exp-det-nombre" class="font-black text-gray-800">--</p></div><div><p class="text-xs text-gray-500 font-bold">DEUDA TOTAL:</p><p id="exp-det-prestamo" class="font-black text-purple-800">S/ 0.00</p></div></div>
+            <table class="w-full text-left border-collapse border border-gray-200">
+                <thead><tr class="bg-purple-800 text-white text-xs uppercase"><th class="px-4 py-2 border">Fecha de Pago</th><th class="px-4 py-2 border text-right">Monto Depositado</th></tr></thead>
+                <tbody id="exp-det-tabla" class="text-sm"></tbody>
+            </table>
+            <div class="mt-4 text-right bg-green-50 p-4 rounded-xl border border-green-200"><p class="font-bold text-green-800">Saldo Restante: <span id="exp-det-saldo" class="text-2xl font-black">S/ 0.00</span></p></div>
+        </div>
+        <div id="plt-recibo" class="p-8 bg-white border-8 border-purple-900 rounded-3xl w-full relative overflow-hidden mt-10">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-bl-full -z-10 opacity-50"></div>
+            <div class="text-center mb-6"><h2 class="text-3xl font-black text-purple-900 uppercase">Comprobante</h2><p class="text-purple-500 font-bold text-sm">DE PRÉSTAMO / SALDO</p></div>
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4"><p class="text-xs text-gray-500 font-bold">CLIENTE:</p><p id="rec-cliente" class="text-2xl font-black text-gray-800">--</p><p id="rec-fecha" class="text-xs text-gray-400 mt-1">Emitido: --</p></div>
+            <div class="space-y-2 mb-6">
+                <div class="flex justify-between p-3 border-b"><p class="font-bold text-gray-600 text-sm">Saldo Anterior:</p><p id="rec-saldo" class="font-bold text-gray-800">S/ 0.00</p></div>
+                <div class="flex justify-between p-3 bg-purple-50 rounded-lg"><p class="font-bold text-purple-800 text-sm">Nuevo Préstamo:</p><p id="rec-nuevo" class="font-black text-purple-900 text-lg">S/ 0.00</p></div>
+                <div class="flex justify-between p-3 bg-orange-50 rounded-lg"><p class="font-bold text-orange-800 text-sm">Comisión / Interés:</p><p id="rec-comision" class="font-black text-orange-600 text-lg">S/ 0.00</p></div>
+            </div>
+            <div class="bg-purple-900 p-6 rounded-2xl text-center text-white"><p class="text-sm font-bold uppercase text-purple-200 mb-1">Nueva Deuda Total Consolidada</p><p id="rec-total" class="text-4xl font-black">S/ 0.00</p></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
