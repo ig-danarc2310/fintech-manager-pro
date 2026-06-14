@@ -1,43 +1,26 @@
-// --- 1. SEGURIDAD: VERIFICACIÓN DE ACCESO ---
-window.verificarAcceso = () => {
-    const passInput = document.getElementById('passInput').value;
-    const loginScreen = document.getElementById('loginScreen');
-    const mainApp = document.getElementById('mainApp');
-    const loginError = document.getElementById('loginError');
-
-    if (passInput === "0132") {
-        // Animación de salida y despliegue del Dashboard
-        loginScreen.classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => {
-            loginScreen.style.display = 'none';
-            mainApp.classList.remove('hidden');
-            
-            // Inicializar renderizado de datos post-login
-            window.actualizarSelectorPerfiles();
-// --- 2. ESTRUCTURA DE DATOS UNIFICADA Y FIREBASE ---
+// --- 1. IMPORTS OBLIGATORIOS (SIEMPRE EN LA LÍNEA 1) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Pegarás aquí la configuración que te dé Firebase al crear el proyecto
+// --- 2. CONFIGURACIÓN FIREBASE Y DATOS GLOBALES ---
 const firebaseConfig = {
-  apiKey: "AIzaSyBI343Syz-P8qPkgGqs-RZvac64zyfQl6s",
-  authDomain: "realtime-database-b685a.firebaseapp.com",
-  projectId: "realtime-database-b685a",
-  storageBucket: "realtime-database-b685a.firebasestorage.app",
-  messagingSenderId: "354223722580",
-  appId: "1:354223722580:web:42ad7713daed77c9b6ddc1",
-  measurementId: "G-EH29WKEXCB"
+    apiKey: "AIzaSyBI343Syz-P8qPkgGqs-RZvac64zyfQl6s",
+    authDomain: "realtime-database-b685a.firebaseapp.com",
+    projectId: "realtime-database-b685a",
+    storageBucket: "realtime-database-b685a.firebasestorage.app",
+    messagingSenderId: "354223722580",
+    appId: "1:354223722580:web:42ad7713daed77c9b6ddc1",
+    measurementId: "G-EH29WKEXCB"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Variables globales
 let dbGlobal = { perfiles: {}, prestamosHistorial: [] };
 let perfilActivo = ""; 
 let scanActual = { monto: 0, fecha: "" };
 
-// Función para cargar los datos desde la nube al iniciar
+// --- 3. FUNCIONES DE BASE DE DATOS ---
 window.cargarDB = async () => {
     try {
         const snapshot = await get(ref(db, 'fintechData'));
@@ -51,31 +34,47 @@ window.cargarDB = async () => {
         console.error("Error cargando Firebase, usando LocalStorage local:", error);
         dbGlobal = JSON.parse(localStorage.getItem('fintechGlobalDB')) || { perfiles: {}, prestamosHistorial: [] };
     }
-    window.actualizarSelectorPerfiles();
-    window.renderizarPrestamos();
 };
 
-// Modificamos guardarDB para que envíe los datos a Firebase y mantenga una copia local
 window.guardarDB = async () => {
-    localStorage.setItem('fintechGlobalDB', JSON.stringify(dbGlobal)); // Backup local
+    // Mantiene un backup local por si se cae el internet
+    localStorage.setItem('fintechGlobalDB', JSON.stringify(dbGlobal)); 
     try {
-        await set(ref(db, 'fintechData'), dbGlobal); // Guardado en la nube
+        await set(ref(db, 'fintechData'), dbGlobal); 
     } catch (error) {
         console.error("No se pudo sincronizar con la nube:", error);
     }
 };
 
-// Llama a cargarDB cuando todo el documento esté listo
+// Cargar la base de datos en segundo plano al iniciar la web
 document.addEventListener("DOMContentLoaded", () => {
     window.cargarDB();
 });
-let scanActual = { monto: 0, fecha: "" };
 
-window.guardarDB = () => {
-    localStorage.setItem('fintechGlobalDB', JSON.stringify(dbGlobal));
+// --- 4. SEGURIDAD: VERIFICACIÓN DE ACCESO ---
+window.verificarAcceso = () => {
+    const passInput = document.getElementById('passInput').value;
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    const loginError = document.getElementById('loginError');
+
+    if (passInput === "0132") {
+        // Animación de salida
+        loginScreen.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+            loginScreen.style.display = 'none';
+            mainApp.classList.remove('hidden');
+            
+            // Renderizar los datos recién cuando el usuario pasa la seguridad
+            window.actualizarSelectorPerfiles();
+            window.renderizarPrestamos();
+        }, 300);
+    } else {
+        loginError.classList.remove('hidden');
+    }
 };
 
-// --- 3. SISTEMA DE PESTAÑAS ---
+// --- 5. SISTEMA DE PESTAÑAS ---
 window.cambiarPestaña = (tab) => {
     const vAbonos = document.getElementById('vistaAbonos');
     const vPrestamos = document.getElementById('vistaPrestamos');
@@ -96,7 +95,7 @@ window.cambiarPestaña = (tab) => {
     }
 };
 
-// --- 4. LÓGICA: PERFILES Y ABONOS ---
+// --- 6. LÓGICA: PERFILES Y ABONOS ---
 window.actualizarSelectorPerfiles = () => {
     const selector = document.getElementById('selectorPerfil');
     const seleccionPrevia = selector.value;
@@ -197,7 +196,7 @@ window.eliminarAbono = (id) => {
     window.actualizarUIAbonosCliente();
 };
 
-// --- ESCÁNER OCR ---
+// --- 7. ESCÁNER OCR ---
 const obtenerParteSuperior = (file) => {
     return new Promise(resolve => {
         const img = new Image();
@@ -266,7 +265,7 @@ window.registrarAbono = () => {
     document.getElementById('abPreview').classList.add('hidden');
 };
 
-// --- 5. LÓGICA: EMISIÓN DE PRÉSTAMOS E INTEGRACIÓN ---
+// --- 8. LÓGICA: EMISIÓN DE PRÉSTAMOS E INTEGRACIÓN ---
 window.calcularPrestamo = () => {
     const s = parseFloat(document.getElementById('prSaldo').value)||0;
     const n = parseFloat(document.getElementById('prNuevo').value)||0;
@@ -327,7 +326,7 @@ window.renderizarPrestamos = () => {
     document.getElementById('prStatComision').innerText = `S/ ${com.toFixed(2)}`;
 };
 
-// --- 6. EXPORTACIÓN Y REINICIO ---
+// --- 9. EXPORTACIÓN Y REINICIO ---
 window.exportarAppGlobal = () => {
     const jsonDbGlobal = JSON.stringify(dbGlobal);
     const scriptRestauracion = `<script id="inyector-fintech-global">
@@ -354,11 +353,14 @@ window.exportarAppGlobal = () => {
 window.limpiarAppGlobal = () => {
     if(confirm("⚠️ ¿PELIGRO: ESTO BORRARÁ ABSOLUTAMENTE TODOS LOS DATOS. SEGURO?")) {
         localStorage.removeItem('fintechGlobalDB');
-        location.reload();
+        // También limpiamos la nube
+        set(ref(db, 'fintechData'), { perfiles: {}, prestamosHistorial: [] }).then(() => {
+            location.reload();
+        });
     }
 };
 
-// --- 7. EXPORTACIÓN PNGs ---
+// --- 10. EXPORTACIÓN PNGs ---
 const nombreArchivo = (prefijo, nombreP) => {
     let n = (nombreP || "S/N").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     const d = new Date(); return `${n}-${d.getDate()}${d.getMonth()+1}${d.getFullYear()}-${d.getHours()}${d.getMinutes()}-${prefijo}.png`;
