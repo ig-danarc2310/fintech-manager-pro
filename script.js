@@ -20,13 +20,13 @@ import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/1
 
 // Pegarás aquí la configuración que te dé Firebase al crear el proyecto
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "tu-proyecto.firebaseapp.com",
-    databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
-    projectId: "tu-proyecto",
-    storageBucket: "tu-proyecto.appspot.com",
-    messagingSenderId: "123456",
-    appId: "1:123456:web:abcdef"
+  apiKey: "AIzaSyBI343Syz-P8qPkgGqs-RZvac64zyfQl6s",
+  authDomain: "realtime-database-b685a.firebaseapp.com",
+  projectId: "realtime-database-b685a",
+  storageBucket: "realtime-database-b685a.firebasestorage.app",
+  messagingSenderId: "354223722580",
+  appId: "1:354223722580:web:42ad7713daed77c9b6ddc1",
+  measurementId: "G-EH29WKEXCB"
 };
 
 const app = initializeApp(firebaseConfig);
