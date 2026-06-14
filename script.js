@@ -14,20 +14,61 @@ window.verificarAcceso = () => {
             
             // Inicializar renderizado de datos post-login
             window.actualizarSelectorPerfiles();
-            window.renderizarPrestamos();
-        }, 300);
-    } else {
-        loginError.classList.remove('hidden');
+// --- 2. ESTRUCTURA DE DATOS UNIFICADA Y FIREBASE ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// Pegarás aquí la configuración que te dé Firebase al crear el proyecto
+const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "tu-proyecto.firebaseapp.com",
+    databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
+    projectId: "tu-proyecto",
+    storageBucket: "tu-proyecto.appspot.com",
+    messagingSenderId: "123456",
+    appId: "1:123456:web:abcdef"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Variables globales
+let dbGlobal = { perfiles: {}, prestamosHistorial: [] };
+let perfilActivo = ""; 
+let scanActual = { monto: 0, fecha: "" };
+
+// Función para cargar los datos desde la nube al iniciar
+window.cargarDB = async () => {
+    try {
+        const snapshot = await get(ref(db, 'fintechData'));
+        if (snapshot.exists()) {
+            dbGlobal = snapshot.val();
+            // Asegurar la estructura por si la BD está vacía
+            if (!dbGlobal.perfiles) dbGlobal.perfiles = {};
+            if (!dbGlobal.prestamosHistorial) dbGlobal.prestamosHistorial = [];
+        }
+    } catch (error) {
+        console.error("Error cargando Firebase, usando LocalStorage local:", error);
+        dbGlobal = JSON.parse(localStorage.getItem('fintechGlobalDB')) || { perfiles: {}, prestamosHistorial: [] };
+    }
+    window.actualizarSelectorPerfiles();
+    window.renderizarPrestamos();
+};
+
+// Modificamos guardarDB para que envíe los datos a Firebase y mantenga una copia local
+window.guardarDB = async () => {
+    localStorage.setItem('fintechGlobalDB', JSON.stringify(dbGlobal)); // Backup local
+    try {
+        await set(ref(db, 'fintechData'), dbGlobal); // Guardado en la nube
+    } catch (error) {
+        console.error("No se pudo sincronizar con la nube:", error);
     }
 };
 
-// --- 2. ESTRUCTURA DE DATOS UNIFICADA ---
-let dbGlobal = JSON.parse(localStorage.getItem('fintechGlobalDB')) || {
-    perfiles: {}, 
-    prestamosHistorial: []
-};
-
-let perfilActivo = ""; 
+// Llama a cargarDB cuando todo el documento esté listo
+document.addEventListener("DOMContentLoaded", () => {
+    window.cargarDB();
+});
 let scanActual = { monto: 0, fecha: "" };
 
 window.guardarDB = () => {
